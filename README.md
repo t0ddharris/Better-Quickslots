@@ -4,8 +4,6 @@ A Dawnwalker UI mod with thin, stock-style rarity borders for inventory, craftin
 
 **Current release: v1.0.0 — first stable release.**
 
-The installed mod files are identical to the confirmed v0.4.4 build. Existing v0.4.4 users do not need to reinstall.
-
 ## Install or upgrade
 
 Download [BetterQuickslots v1.0.0](https://github.com/t0ddharris/Better-Quickslots/releases/download/v1.0.0/BetterQuickslots-v1.0.0.zip). Close the game and copy its three mod files into `<game folder>\Dawnwalker\Content\Paks\~mods`:

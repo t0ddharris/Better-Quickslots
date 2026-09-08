@@ -207,9 +207,7 @@ print('PASS: one visible stock-artwork rarity outline; original bytecode, schema
 
 readme = '''Better Quickslots — v1.0.0
 
-First stable release. The three installed mod files are byte-for-byte identical
-to the confirmed v0.4.4 build. This release changes version labels and documentation,
-with no gameplay or visual changes. Existing v0.4.4 users do not need to reinstall.
+First stable release.
 
 FEATURES
 Thin, stock-style item rarity borders for inventory, crafting, and gameplay
@@ -240,9 +238,9 @@ Game updates may require rebuilding. The same button is used by inventory,
 crafting and gameplay. Do not assume compatibility with every future game patch.
 
 VALIDATION / SOURCE
-Based on v0.4.4, confirmed working and visually approved in game. Package integrity,
+Confirmed working and visually approved in game. Package integrity,
 recovered Blueprint assets, texture mip bytes and stock consumer compatibility
-were verified for that build. v1.0.0 preserves the three mod files exactly.
+have been verified.
 
 Source, build instructions and release history:
 https://github.com/t0ddharris/Better-Quickslots
