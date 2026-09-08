@@ -1,0 +1,18 @@
+# Publish only the reviewed source, documentation and current release ZIP.
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/development/
+/development/*
+!/development/build_all_ui.py
+!/development/build_patch.py
+!/development/build_rarity.py
+!/development/build_trimmed_sprite.py
+!/docs/
+/docs/*
+!/docs/BUILD.md
+!/docs/CHANGELOG.md
+!/releases/
+/releases/*
+!/releases/BetterQuickslots-v0.4.4.zip
