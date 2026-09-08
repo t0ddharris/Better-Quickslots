@@ -1,4 +1,4 @@
-"""Package v0.4.4: one stock-style trimmed rarity outline."""
+"""Package v1.0.0: one stock-style trimmed rarity outline."""
 import json
 import shutil
 import subprocess
@@ -7,10 +7,10 @@ from pathlib import Path
 import build_rarity as r
 
 ROOT = Path(__file__).resolve().parent
-stage = ROOT / 'staging-v044'
-dist = ROOT.parent / 'releases/BetterQuickslots-v0.4.4'
-containers = ROOT / 'verify-v044-containers'
-verified = ROOT / 'verify-v044'
+stage = ROOT / 'staging-v100'
+dist = ROOT.parent / 'releases/BetterQuickslots-v1.0.0'
+containers = ROOT / 'verify-v100-containers'
+verified = ROOT / 'verify-v100'
 ui = Path('Dawnwalker/Content/_Dawnwalker/UI/_Unified')
 for directory in (stage, dist, containers, verified):
     directory.mkdir(exist_ok=True)
@@ -205,51 +205,51 @@ for _, relative in (assets[0], assets[3]):
     assert properties(scale['X']) == 1.19 and properties(scale['Y']) == 1.19
 print('PASS: one visible stock-artwork rarity outline; original bytecode, schemas, backgrounds, icons and counts preserved.')
 
-readme = '''Better Quickslots — v0.4.4
+readme = '''Better Quickslots — v1.0.0
 
-Extends the confirmed inventory rarity borders to crafting quickslots and the
-main gameplay HUD through their shared quickslot button. Retains inventory hover
-details, rarity colors, blue correction, and brightness.
-Uses a single innermost outline made from the original stock diamond artwork.
-The four outer layers are collapsed to remove the thick stepped bevel. Retains
-the v0.4.3 private texture with its outer black halo trimmed at every mip level.
-The original item background stays put; no shared game texture is replaced.
-Borders update when the displayed item changes; empty slots have no rarity glow.
-UE4SS is not required.
+First stable release. The three installed mod files are byte-for-byte identical
+to the confirmed v0.4.4 build. This release changes version labels and documentation,
+with no gameplay or visual changes. Existing v0.4.4 users do not need to reinstall.
+
+FEATURES
+Thin, stock-style item rarity borders for inventory, crafting, and gameplay
+quickslots, plus inventory quickslot hover details. Preserves the original
+artwork, icons, counts and layout. Borders update when displayed items change;
+empty slots have no rarity outline. UE4SS is not required.
 
 INSTALL / UPGRADE
-Close the game. Copy the three .pak/.ucas/.utoc files together into:
+Close the game. Extract this ZIP and copy all three files together into:
 <game installation folder>\\Dawnwalker\\Content\\Paks\\~mods
-The files are now named 00000000_BetterQuickslots_P.pak/.ucas/.utoc.
-When upgrading from the former Quickslot Hover mod, remove its three old mod
-files first, or disable that version in your mod manager. The renamed files
-will not overwrite the old filenames. For later upgrades, replace all three
-Better Quickslots files together.
+
+00000000_BetterQuickslots_P.pak
+00000000_BetterQuickslots_P.ucas
+00000000_BetterQuickslots_P.utoc
+
+Create ~mods if needed. Replace all three Better Quickslots files together.
+If upgrading from the former Quickslot Hover mod, remove its three old mod
+files first or disable that version in your mod manager. These filenames will
+not overwrite the old names. Never keep both versions installed.
 
 UNINSTALL
-Close the game and remove these three 00000000_BetterQuickslots_P files.
-To revert, remove these three files and install your previous release.
+Close the game and remove only the three Better Quickslots files listed above.
+UE4SS and other mods can stay installed.
 
-COMPATIBILITY / VALIDATION
-Replaces WBP_Hub_NewInventory and WBP_HUD_Quickslots_Button, and includes the
-two inventory-specific classes. Mods replacing either shared asset may conflict.
-Other screens using the shared quickslot button also receive rarity borders.
-v0.4.1 preserves the shared button's original property layout, correcting the
-schema incompatibility introduced in v0.4.0. Added images are found through the
-existing widget hierarchy without adding serialized class members.
-v0.4.4 was confirmed working in game, including the thin stock-style border.
-This is a branding and directory cleanup of that confirmed build. Package
-integrity, all six asset round trips, and stock consumer compatibility pass.
-Both external and inline texture mips are verified byte-for-byte after packing.
-The local verification reference set lacks the stock Paper2D default material;
-its two inherited import names cannot be recovered locally. Other imports match.
+COMPATIBILITY
+Other mods replacing WBP_Hub_NewInventory or WBP_HUD_Quickslots_Button may conflict.
+Game updates may require rebuilding. The same button is used by inventory,
+crafting and gameplay. Do not assume compatibility with every future game patch.
 
-Check crafting and gameplay with different rarities, empty slots, reassigned and
-consumed items, HUD hide/show, and inventory opening/closing. Inventory hover
-details should continue to work.
+VALIDATION / SOURCE
+Based on v0.4.4, confirmed working and visually approved in game. Package integrity,
+recovered Blueprint assets, texture mip bytes and stock consumer compatibility
+were verified for that build. v1.0.0 preserves the three mod files exactly.
+
+Source, build instructions and release history:
+https://github.com/t0ddharris/Better-Quickslots
 '''
+
 (dist / 'README.txt').write_text(readme, encoding='utf-8')
-archive = ROOT.parent / 'releases/BetterQuickslots-v0.4.4.zip'
+archive = ROOT.parent / 'releases/BetterQuickslots-v1.0.0.zip'
 with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as z:
     for name in ('README.txt', *(stem + suffix for suffix in ('.pak', '.ucas', '.utoc'))):
         z.write(dist / name, name)

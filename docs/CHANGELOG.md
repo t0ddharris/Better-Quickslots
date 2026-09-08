@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.0
+
+- First stable release, promoted from the confirmed v0.4.4 build.
+- No visual or gameplay changes; the three installed files are byte-for-byte identical to v0.4.4.
+- Updated release version, documentation, ZIP name and download links.
+- Existing v0.4.4 installations need no update. Installed mod filenames remain unchanged.
+
 ## v0.4.4
 
 - Thin, stock-style rarity borders across inventory, crafting, and gameplay quickslots.

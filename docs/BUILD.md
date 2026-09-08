@@ -30,8 +30,12 @@ These are the inputs retained in the development workspace. The scripts do not e
 python development/build_all_ui.py
 ```
 
-The builder regenerates the inventory hover patch, applies the rarity border, trims a private copy of the texture's outer alpha, creates the shared button with the stock property layout, then packages six assets. It writes `releases/BetterQuickslots-v0.4.4.zip` and the unpacked files beside it.
+The builder regenerates the inventory hover patch, applies the rarity border, trims a private copy of the texture's outer alpha, creates the shared button with the stock property layout, then packages six assets. It writes `releases/BetterQuickslots-v1.0.0.zip` and the unpacked files beside it.
 
 Validation covers container integrity, recovered Blueprint functions and properties, texture mip bytes, compatibility with stock HUD/crafting templates, and exactly one visible rarity outline. The local reference set does not include Paper2D's stock default sprite material, so its two inherited import names cannot be recovered locally; they are retained from the source sprite.
 
 In-game testing remains necessary after changing assets or supporting a new game patch.
+
+## Stable release promotion
+
+v1.0.0 promotes the confirmed v0.4.4 build without recooking its assets. Only the ZIP name and enclosed documentation changed; all three installed files are byte-for-byte identical. The builder now targets v1.0.0 for future rebuilds. The v0.4.4 ZIP and GitHub release are preserved.

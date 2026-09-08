@@ -3,6 +3,7 @@
 !/.gitignore
 !/.gitattributes
 !/README.md
+!/AGENTS.md
 !/development/
 /development/*
 !/development/build_all_ui.py
@@ -16,3 +17,4 @@
 !/releases/
 /releases/*
 !/releases/BetterQuickslots-v0.4.4.zip
+!/releases/BetterQuickslots-v1.0.0.zip
