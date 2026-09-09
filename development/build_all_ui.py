@@ -1,23 +1,36 @@
-"""Package v1.0.0: one stock-style trimmed rarity outline."""
+"""Package default v1.0.0 or the optional Saturated variant."""
+import argparse
 import json
 import shutil
 import subprocess
 import zipfile
 from pathlib import Path
-import build_rarity as r
 
 ROOT = Path(__file__).resolve().parent
-stage = ROOT / 'staging-v100'
-dist = ROOT.parent / 'releases/BetterQuickslots-v1.0.0'
-containers = ROOT / 'verify-v100-containers'
-verified = ROOT / 'verify-v100'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--variant', choices=('default', 'saturated'), default='default')
+parser.add_argument('--output-root', type=Path, default=ROOT.parent / 'releases',
+                    help='Directory for the ZIP and unpacked files (use a scratch path for regression builds).')
+args = parser.parse_args()
+saturated = args.variant == 'saturated'
+version = '1.0.0'
+package = f'BetterQuickslots-v{version}' + ('-Saturated' if saturated else '')
+build_id = 'v100-saturated-release' if saturated else 'v100'
+stage = ROOT / f'staging-{build_id}'
+dist = args.output_root.resolve() / package
+containers = ROOT / f'verify-{build_id}-containers'
+verified = ROOT / f'verify-{build_id}'
+import build_rarity as r
 ui = Path('Dawnwalker/Content/_Dawnwalker/UI/_Unified')
 for directory in (stage, dist, containers, verified):
-    directory.mkdir(exist_ok=True)
+    directory.mkdir(parents=True, exist_ok=True)
 
 # Restore the confirmed original geometry and use an alpha-trimmed private sprite.
 from build_trimmed_sprite import build as build_trimmed, ATLAS
-trimmed_assets, trimmed_bulk = build_trimmed()
+trimmed_assets, trimmed_bulk = build_trimmed(
+    border_gain=1.45 if saturated else 1.0,
+    border_alpha_gain=1.20 if saturated else 1.0,
+)
 trimmed_package = r.add_import('/Game/_Dawnwalker/UI/_Unified/HUD/Quickslots/Atlas/Frames/T_Quickslot_RarityTrimmed', 0, cn='Package')
 trimmed_resource = r.add_import('T_Quickslot_RarityTrimmed', trimmed_package,
                                 cp='/Script/Paper2D', cn='PaperSprite')
@@ -204,13 +217,25 @@ for _, relative in (assets[0], assets[3]):
     scale = next(p['Value'][0]['Value'] for p in transform['Value'] if p['Name'] == 'Scale')
     assert properties(scale['X']) == 1.19 and properties(scale['Y']) == 1.19
 print('PASS: one visible stock-artwork rarity outline; original bytecode, schemas, backgrounds, icons and counts preserved.')
+# Tone adjustments must leave every non-texture asset byte-identical to the
+# confirmed v0.4.4 / default v1.0.0 build, including both complete buttons.
+for _, relative in assets:
+    if relative == ATLAS:
+        continue
+    for suffix in ('.uasset', '.uexp'):
+        assert (stage / relative.with_suffix(suffix)).read_bytes() == (ROOT / 'staging-v044' / relative.with_suffix(suffix)).read_bytes(), (relative, 'confirmed asset changed')
+print('PASS: all five non-texture assets are byte-identical to the confirmed default.')
 
-readme = '''Better Quickslots — v1.0.0
+title = f'Better Quickslots — v{version}' + (' — Saturated' if saturated else '')
+introduction = ('Optional version with a more pronounced rarity border.' if saturated else 'First stable release.')
+variant_features = ('The same thin diamond artwork with stronger border color and opacity.\n' if saturated else '')
+variant_install = ('Install either Default or Saturated, never both. To switch, replace all\nthree files together or disable the other variant in your mod manager.\n\n' if saturated else '')
+readme = f'''{title}
 
-First stable release.
+{introduction}
 
 FEATURES
-Thin, stock-style item rarity borders for inventory, crafting, and gameplay
+{variant_features}Thin, stock-style item rarity borders for inventory, crafting, and gameplay
 quickslots, plus inventory quickslot hover details. Preserves the original
 artwork, icons, counts and layout. Borders update when displayed items change;
 empty slots have no rarity outline. UE4SS is not required.
@@ -224,11 +249,8 @@ Close the game. Extract this ZIP and copy all three files together into:
 00000000_BetterQuickslots_P.utoc
 
 Create ~mods if needed. Replace all three Better Quickslots files together.
-If upgrading from the former Quickslot Hover mod, remove its three old mod
-files first or disable that version in your mod manager. These filenames will
-not overwrite the old names. Never keep both versions installed.
 
-UNINSTALL
+{variant_install}UNINSTALL
 Close the game and remove only the three Better Quickslots files listed above.
 UE4SS and other mods can stay installed.
 
@@ -236,19 +258,16 @@ COMPATIBILITY
 Other mods replacing WBP_Hub_NewInventory or WBP_HUD_Quickslots_Button may conflict.
 Game updates may require rebuilding. The same button is used by inventory,
 crafting and gameplay. Do not assume compatibility with every future game patch.
-
-VALIDATION / SOURCE
-Confirmed working and visually approved in game. Package integrity,
-recovered Blueprint assets, texture mip bytes and stock consumer compatibility
-have been verified.
-
-Source, build instructions and release history:
-https://github.com/t0ddharris/Better-Quickslots
 '''
 
 (dist / 'README.txt').write_text(readme, encoding='utf-8')
-archive = ROOT.parent / 'releases/BetterQuickslots-v1.0.0.zip'
+archive = dist.parent / (package + '.zip')
 with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as z:
     for name in ('README.txt', *(stem + suffix for suffix in ('.pak', '.ucas', '.utoc'))):
         z.write(dist / name, name)
+with zipfile.ZipFile(archive) as z:
+    assert z.testzip() is None, 'ZIP CRC failure'
+    assert set(z.namelist()) == {'README.txt', *(stem + suffix for suffix in ('.pak', '.ucas', '.utoc'))}
+    for name in z.namelist():
+        assert z.read(name) == (dist / name).read_bytes()
 print(f'Release: {archive}')
