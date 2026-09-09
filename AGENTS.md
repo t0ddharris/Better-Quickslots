@@ -5,9 +5,12 @@
 - Project: **Better Quickslots**, a UI mod for The Blood of Dawnwalker.
 - Public repository: `https://github.com/t0ddharris/Better-Quickslots`.
 - **v1.0.0 is the stable release, promoted from the confirmed v0.4.4 build with identical mod binaries.** v0.4.4 supplies the in-game visual and behavioral baseline until a changed build is explicitly confirmed.
+- **Saturated v1.0.0 is the user-confirmed optional release**, using border color gain 1.45 and alpha gain 1.20. Its payloads are identical to the approved final test build. Preserve this treatment and the separate, unchanged Default v1.0.0; earlier Saturated test labels are not public release versions.
 - Keep the stock UI appearance: thin diamond rarity borders, original artwork, icons, counts, and layout. Avoid thick bevels, multiple visible outline layers, and black backgrounds extending beyond the colored edge.
 - Preserve inventory hover details and rarity borders in inventory, crafting, and gameplay.
 - Use `BetterQuickslots` in release and installed filenames; preserve the GitHub repository's actual hyphenated name in URLs.
+- Keep the packaged `README.txt` concise: title/version, a brief release introduction, FEATURES, INSTALL / UPGRADE, UNINSTALL, and COMPATIBILITY. End after COMPATIBILITY. Omit validation/source sections, source/build/release-history links, and prior-build lineage wording unless the user requests them. Keep the builder's README template aligned with this format for future releases.
+- Omit the legacy Quickslot Hover upgrade/removal paragraph from README files and future package templates. Keep the current Default/Saturated switching instructions.
 
 ## GitHub and Git
 

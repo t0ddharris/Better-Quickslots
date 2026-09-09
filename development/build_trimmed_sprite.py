@@ -1,4 +1,4 @@
-"""Trim only the outer alpha of a private copy of the game's rarity artwork."""
+"""Trim a private rarity sprite; optionally lift the retained border tone."""
 import base64
 import json
 import struct
@@ -20,12 +20,18 @@ def renamed(value, substitutions):
         return [renamed(v, substitutions) for v in value]
     return value
 
-def build():
+def build(*, border_gain=1.0, border_alpha_gain=1.0):
+    # The alternate changes only the retained border's tone and opacity.
+    # Keep defaults byte-identical to the confirmed texture and preserve its
+    # artwork, transparent footprint, dark center and original cooked mips.
+    assert 1.0 <= border_gain <= 2.0
+    assert 1.0 <= border_alpha_gain <= 2.0
     atlas = json.loads((ROOT / 'decoded/quickslot-atlas.json').read_text(encoding='utf-8-sig'))
     original = ROOT / 'extracted' / UI / 'HUD/Quickslots/Atlas/Textures/Atlas_0.ubulk'
     bulk = bytearray(original.read_bytes())
     texture = atlas['Exports'][0]
     extra = bytearray(base64.b64decode(texture['Extras']))
+    original_extra = bytes(extra)
     # DataResource inline offsets are relative to the start of the export.
     prefix_size = texture['SerialSize'] - len(extra)
     assert prefix_size == 36
@@ -36,10 +42,12 @@ def build():
     # Original sprite: (1,235), 152x152. The bright diamond is at Manhattan
     # radii 61..66 around its center; the black halo extends to radius 76.
     mask = [1.0] * (width * height)
+    border = [0.0] * (width * height)
     for y in range(235, 387):
         for x in range(1, 153):
             radius = abs(x + 0.5 - 77.0) + abs(y + 0.5 - 311.0)
             mask[y * width + x] = max(0.0, min(1.0, 67.0 - radius))
+            border[y * width + x] = 1.0 if 60.0 <= radius < 67.0 else 0.0
     for mip, resource in enumerate(atlas['DataResources']):
         mip_width, mip_height = max(1, width >> mip), max(1, height >> mip)
         assert resource['SerialSize'] == mip_width * mip_height * 4
@@ -47,8 +55,11 @@ def build():
         target = bulk if external else extra
         offset = resource['SerialOffset'] - (0 if external else prefix_size)
         assert 0 <= offset <= len(target) - resource['SerialSize']
-        # Average the full-resolution mask for every cooked mip, retaining
-        # existing RGB and original mip filtering rather than repainting art.
+        source = original.read_bytes() if external else original_extra
+        changed = 0
+        # Average both masks into each existing cooked mip. The default keeps
+        # RGB untouched; Saturated lifts only the retained border, with no new
+        # pixels, geometry, outline layers or changes to other atlas regions.
         xstep, ystep = width // mip_width, height // mip_height
         for y in range(mip_height):
             for x in range(mip_width):
@@ -56,9 +67,25 @@ def build():
                                for sy in range(y * ystep, (y + 1) * ystep)
                                for sx in range(x * xstep, (x + 1) * xstep)) / (xstep * ystep)
                 alpha = offset + (y * mip_width + x) * 4 + 3
-                target[alpha] = round(target[alpha] * coverage)
+                border_coverage = sum(border[sy * width + sx]
+                                      for sy in range(y * ystep, (y + 1) * ystep)
+                                      for sx in range(x * xstep, (x + 1) * xstep)) / (xstep * ystep)
+                trimmed_alpha = round(source[alpha] * coverage)
+                alpha_gain = 1.0 + (border_alpha_gain - 1.0) * border_coverage
+                target[alpha] = min(255, round(trimmed_alpha * alpha_gain))
+                gain = 1.0 + (border_gain - 1.0) * border_coverage
+                for channel in range(alpha - 3, alpha):
+                    target[channel] = min(255, round(source[channel] * gain))
+                assert (target[alpha] == 0) == (trimmed_alpha == 0), 'Alpha footprint changed'
+                assert target[alpha] >= trimmed_alpha
+                if border_coverage == 0.0:
+                    assert target[alpha - 3:alpha] == source[alpha - 3:alpha]
+                    assert target[alpha] == trimmed_alpha
+                changed += target[alpha - 3:alpha + 1] != source[alpha - 3:alpha + 1]
+        print(f'Texture mip {mip}: {mip_width}x{mip_height}, {changed} adjusted pixels; footprint preserved')
     source = original.read_bytes()
-    assert all(bulk[i] == source[i] for i in range(len(bulk)) if i % 4 != 3)
+    if border_gain == 1.0:
+        assert all(bulk[i] == source[i] for i in range(len(bulk)) if i % 4 != 3)
     assert any(bulk[i] != source[i] for i in range(3, len(bulk), 4))
     texture['Extras'] = base64.b64encode(extra).decode()
     old_path = '/Game/_Dawnwalker/UI/_Unified/HUD/Quickslots/Atlas/Textures/Atlas'

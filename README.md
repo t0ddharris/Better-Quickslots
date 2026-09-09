@@ -2,7 +2,9 @@
 
 A Dawnwalker UI mod with thin, stock-style rarity borders for inventory, crafting, and gameplay quickslots, plus inventory quickslot hover details.
 
-**Current release: v1.0.0 — first stable release.**
+**Default: v1.0.0 — first stable release, unchanged.**
+
+An optional [Saturated v1.0.0](releases/BetterQuickslots-v1.0.0-Saturated.zip) gives the same thin diamond artwork stronger color intensity and opacity. It preserves the original shape, layout, rarity colors, blue correction, icons, counts, and hover details. The Saturated version has been confirmed in game and passes the full static validation pipeline.
 
 ## Install or upgrade
 
@@ -12,7 +14,9 @@ Download [BetterQuickslots v1.0.0](https://github.com/t0ddharris/Better-Quickslo
 - `00000000_BetterQuickslots_P.ucas`
 - `00000000_BetterQuickslots_P.utoc`
 
-When upgrading from the former Quickslot Hover mod, remove its three old mod files first or disable that version in your mod manager. The new filenames will not overwrite the old files. UE4SS is not required.
+Install either Default or Saturated. Both use the same three filenames; to switch, close the game and replace all three together, or disable the other variant in your mod manager. Never enable both variants together.
+
+UE4SS is not required.
 
 ## Source and building
 
