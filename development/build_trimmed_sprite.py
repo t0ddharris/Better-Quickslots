@@ -3,8 +3,9 @@ import base64
 import json
 import struct
 from pathlib import Path
+import os
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(os.environ.get('BETTER_QUICKSLOTS_INPUT_ROOT', Path(__file__).resolve().parent))
 UI = Path('Dawnwalker/Content/_Dawnwalker/UI/_Unified')
 ATLAS = UI / 'HUD/Quickslots/Atlas/Textures/QSH_RarityAtlas_0.uasset'
 SPRITE = UI / 'HUD/Quickslots/Atlas/Frames/T_Quickslot_RarityTrimmed.uasset'

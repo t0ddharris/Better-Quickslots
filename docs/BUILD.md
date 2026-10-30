@@ -1,66 +1,51 @@
 # Building Better Quickslots
 
-The repository contains the mod's Python builders and the current installable ZIP. Original game assets, decoded game data, game mappings, tool binaries, crash dumps, and local diagnostic outputs are not committed.
+Current version: **v1.1.0**, Default and Saturated, targeting **Dawnwalker 1.1**. Original game assets, mappings, tool binaries, crash dumps, and diagnostic outputs are local prerequisites and are not committed. A fresh clone alone cannot rebuild the mod.
 
 ## Requirements
 
-- Windows and Python 3.12 (the tested environment).
-- A local installation of The Blood of Dawnwalker matching the source assets.
-- [UAssetGUI](https://github.com/atenfyr/UAssetGUI) v1.1.0, with the Dawnwalker mapping configured under `development/tools/Data/Mappings`.
-- [retoc](https://github.com/trumank/retoc) v0.1.5 under `development/tools/retoc`.
+- Python 3.12, or a compatible available Python runtime.
+- Stock Dawnwalker 1.1 game files.
+- UAssetGUI v1.1.0 at `development/tools/UAssetGUI.exe`, with the Dawnwalker mapping under `development/tools/Data/Mappings`.
+- retoc v0.1.5 at `development/tools/retoc/retoc.exe`, targeting UE5.5.
 
-The asset format used by the builders is UE5.5. Build-time mappings and reference assets must be obtained separately; a fresh Git clone alone cannot rebuild the release.
+## Current local inputs
 
-## Local input layout
+The builder defaults to `development/patch11-stock`. Use `--input-root` to select another directory containing the same layout:
 
-Paths are relative to `development/`:
+- `decoded/`: stock 1.1 `hub.json`, `button.json`, `fill.json`, `quickslots.json`, `gameplay-quickslots.json`, `quickslot-atlas.json`, and `T_Quickslot_Background.json`.
+- `extracted/Dawnwalker/Content/`: corresponding stock assets and dependencies at their game-relative paths, including all quickslot atlas mip data.
+- `verify-v02-containers/`: current `global.utoc`/`.ucas` and reference containers. The directory name is historical; these isolated references use the current game's UI dependencies and global container.
 
-- `tools/UAssetGUI.exe` and `tools/retoc/retoc.exe`: conversion tools.
-- `decoded/`: original decoded JSON, including `hub.json`, `button.json`, `fill.json`, `quickslots.json`, `gameplay-quickslots.json`, `quickslot-atlas.json`, and `T_Quickslot_Background.json`.
-- `extracted/Dawnwalker/Content/`: original assets and dependencies at their game-relative paths, including the quickslot atlas bulk data.
-- `verify-v02-containers/`: local reference containers (`global` and `references`) used to recover import names.
-- `staging-v02/`: original inventory layout and hover assets used as byte-for-byte regression baselines.
-- `verify-v041/`: decoded v0.4.1 button assets used to check unchanged bytecode and class schemas.
-- `staging-v044/`: confirmed v0.4.4 assets, also used by v1.0.0, for byte-for-byte comparisons of every non-texture asset.
+Extract stock files from a container-only directory that excludes installed mods; retoc can otherwise include mod overrides. The builder does not extract inputs automatically. Keep original inputs and historical baseline directories intact.
 
-These are the inputs retained in the development workspace. The scripts do not extract them automatically from a game installation.
-
-## Run
+## Build
 
 ```powershell
 python development/build_all_ui.py
-```
-
-Build the optional Saturated package separately:
-
-```powershell
 python development/build_all_ui.py --variant saturated
 ```
 
-This writes `releases/BetterQuickslots-v1.0.0-Saturated.zip` and an unpacked folder with the same name. Default remains v1.0.0. Both packages install the same three filenames; install only one variant at a time. Each variant has separate staging and verification folders.
+Outputs:
 
-For a default regression build without overwriting the preserved release:
+- `releases/BetterQuickslots-v1.1.0.zip`
+- `releases/BetterQuickslots-v1.1.0-Saturated.zip`
+- Matching unpacked folders containing the three installable files and README.
 
-```powershell
-python development/build_all_ui.py --output-root development/saturated-audit/default-regression
-```
+Use `--output-root development/patch11-stock/regression` for a build that does not overwrite releases. Add `--test-build` to label an unconfirmed compatibility test. Both variants install the same filenames; only one can be installed at a time.
 
-The Saturated treatment multiplies the existing retained border's RGB intensity by 1.45 and its trimmed alpha by 1.20, clamped to the texture's byte range. It uses the same artwork and rarity tint logic, preserving rarity hues while lifting border tone and opacity. The adjustment is limited to the existing border ring (Manhattan radii 60 through 66), leaving the dark center and transparent footprint intact. Mask coverage weights the adjustment in every original cooked mip. Default gain values remain 1.0.
+Default retains border gain 1.0 and alpha gain 1.0. Saturated retains the approved gain 2.0 and alpha gain 1.20. The existing trim, single 1.19x diamond layer, rarity tint logic, and empty-slot handling are shared.
 
-The builder regenerates the inventory hover patch, applies the rarity border, trims a private copy of the texture's outer alpha, creates the shared button with the stock property layout, then packages six assets. It writes `releases/BetterQuickslots-v1.0.0.zip` and the unpacked files beside it.
+## Validation and promotion
 
-Validation additionally checks that all five non-texture assets match the confirmed v0.4.4/v1.0.0 staging files byte-for-byte, that tone adjustments preserve the default alpha footprint at every mip, and that the ZIP passes CRC checks with exactly the intended files.
+The builder packages six assets and re-extracts them to check container integrity, imports, function bytecode, properties, and texture mip bytes. It checks current stock consumer compatibility, the exact stock shared-button schema, preservation of every original 1.1 button function, one visible rarity outline, and ZIP CRC/content integrity. Compiled private Blueprint dependencies are also placed beside generated source JSON so UAssetAPI can resolve their schemas.
 
-Validation covers container integrity, recovered Blueprint functions and properties, texture mip bytes, compatibility with stock HUD/crafting templates, and exactly one visible rarity outline. The local reference set does not include Paper2D's stock default sprite material, so its two inherited import names cannot be recovered locally; they are retained from the source sprite.
+Only the two documented inherited Paper2D default material imports have a narrow recovery exception. Do not broaden it to mask other failures.
 
-In-game testing remains necessary after changing assets or supporting a new game patch.
+The user confirmed the Saturated 1.1 compatibility test launches successfully. Saturated v1.1.0 preserves those exact three payloads from `development/patch11-stock/dist/BetterQuickslots-Patch11-Test-Saturated`; only its package documentation and version label change. Default is rebuilt with the same compatibility changes and its original texture treatment. Static checks do not establish in-game appearance; Default still needs a separate in-game check.
 
-## Stable release promotion
+## Preserved historical inputs
 
-v1.0.0 promotes the confirmed v0.4.4 build without recooking its assets. Only the ZIP name and enclosed documentation changed; all three installed files are byte-for-byte identical. The builder now targets v1.0.0 for future rebuilds. The v0.4.4 ZIP and GitHub release are preserved.
+Keep `development/decoded`, `development/extracted`, `verify-v02-containers`, `staging-v02`, `verify-v041`, `staging-v044`, and the approved Saturated test/reference folders. They support historical audits and prior release reproduction. Current builds use the isolated 1.1 inputs instead of replacing these baselines.
 
-## Saturated v1.0.0 promotion
-
-The user confirmed the final Saturated treatment (color gain 1.45, alpha gain 1.20) and selected v1.0.0 as its release version. The three mod payloads are copied unchanged from the approved candidate; promotion changes only the version label and package documentation. Default v1.0.0 remains unchanged.
-
-Earlier test packages are retained locally under `archive/saturated-candidates/`. The final candidate's staging and verification inputs remain under `development/staging-v101-saturated/` and `development/verify-v101-saturated/`. Future Saturated builds use separate `v100-saturated-release` staging and verification folders. Container packing can differ between builds; preserve the promoted payloads when only changing release documentation.
+Default v1.0.0 and Saturated v1.0.1 remain in releases; older archived packages remain preserved. They target the earlier game build. Internal experiments and detailed validation history belong in local-only `docs/DEVELOPMENT_HISTORY.md` or `development/` notes.

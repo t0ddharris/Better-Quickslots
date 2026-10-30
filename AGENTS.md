@@ -3,14 +3,23 @@
 ## Project and user preferences
 
 - Project: **Better Quickslots**, a UI mod for The Blood of Dawnwalker.
+- **Current local packages: Default and Saturated v1.1.0 for Dawnwalker 1.1.** The user confirmed the Saturated compatibility test launches successfully; its exact payloads are retained in Saturated v1.1.0. Default uses the same compatibility changes with its original subtle texture treatment and still needs a separate in-game check. Current builders use isolated `development/patch11-stock` inputs. Preserve all older releases and baselines.
 - Public repository: `https://github.com/t0ddharris/Better-Quickslots`.
 - **v1.0.0 is the stable release, promoted from the confirmed v0.4.4 build with identical mod binaries.** v0.4.4 supplies the in-game visual and behavioral baseline until a changed build is explicitly confirmed.
-- **Saturated v1.0.0 is the user-confirmed optional release**, using border color gain 1.45 and alpha gain 1.20. Its payloads are identical to the approved final test build. Preserve this treatment and the separate, unchanged Default v1.0.0; earlier Saturated test labels are not public release versions.
+- **Saturated v1.0.1 is the user-confirmed optional update**, using border color gain 2.0 and alpha gain 1.20. Its payloads are identical to the approved 2.0x test build. Saturated v1.0.0 (gain 1.45 / alpha 1.20) is already public on Nexus and must remain preserved, along with unchanged Default v1.0.0. Test labels are not public release versions.
 - Keep the stock UI appearance: thin diamond rarity borders, original artwork, icons, counts, and layout. Avoid thick bevels, multiple visible outline layers, and black backgrounds extending beyond the colored edge.
 - Preserve inventory hover details and rarity borders in inventory, crafting, and gameplay.
 - Use `BetterQuickslots` in release and installed filenames; preserve the GitHub repository's actual hyphenated name in URLs.
 - Keep the packaged `README.txt` concise: title/version, a brief release introduction, FEATURES, INSTALL / UPGRADE, UNINSTALL, and COMPATIBILITY. End after COMPATIBILITY. Omit validation/source sections, source/build/release-history links, and prior-build lineage wording unless the user requests them. Keep the builder's README template aligned with this format for future releases.
 - Omit the legacy Quickslot Hover upgrade/removal paragraph from README files and future package templates. Keep the current Default/Saturated switching instructions.
+
+## Public release documentation
+
+- Write the repository README, packaged README, public changelog, and Nexus/GitHub release notes for players. Focus on features, visible changes, installation, upgrades, removal, compatibility, and limitations that affect use.
+- Describe changes from the previous public release and use actual public version numbers. Internal test builds, tuning iterations, branch cleanup, and project maintenance with no player impact do not need public changelog entries.
+- Keep debugging history, test results, approval conversations, asset hashes, payload comparisons, recooking details, and implementation parameters out of player documentation unless the user requests them or they directly help a player make a decision.
+- Record internal experiments and testing in local-only `docs/DEVELOPMENT_HISTORY.md` or ignored notes under `development/`. Do not include those notes or diagnostic artifacts in public release packages or release notes. Keep necessary developer build instructions in `docs/BUILD.md`.
+- Treat the user's documentation cuts as intentional editorial guidance. Do not restore removed internal detail in later releases. Keep generated README templates aligned with the approved concise documentation so rebuilding does not reintroduce it.
 
 ## GitHub and Git
 
@@ -27,6 +36,7 @@
 
 - `development/`: builders, local tools, original/decoded assets, diagnostics, staging, and verification baselines.
 - `releases/`: current ZIP and unpacked installable files.
+- `promo/`: active promotional images, banners, and screenshots. Keep these at the project root; do not archive them during release cleanup unless the user explicitly requests it.
 - `archive/`: previous packages and diagnostic downloads.
 - Read `docs/BUILD.md` for prerequisites and local inputs; update `docs/CHANGELOG.md` for releases.
 - Local-only `docs/DEVELOPMENT_HISTORY.md` records past experiments. Its older status statements are historical.

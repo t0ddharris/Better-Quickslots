@@ -1,5 +1,6 @@
-"""Package default v1.0.0 or the optional Saturated variant."""
+"""Package Better Quickslots v1.1.0 for Dawnwalker 1.1 in Default or Saturated."""
 import argparse
+import os
 import json
 import shutil
 import subprocess
@@ -11,11 +12,21 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--variant', choices=('default', 'saturated'), default='default')
 parser.add_argument('--output-root', type=Path, default=ROOT.parent / 'releases',
                     help='Directory for the ZIP and unpacked files (use a scratch path for regression builds).')
+parser.add_argument('--input-root', type=Path, default=ROOT / 'patch11-stock',
+                    help='Stock Dawnwalker 1.1 inputs and isolated working directory.')
+parser.add_argument('--test-build', action='store_true', help='Label the package as an unconfirmed compatibility test.')
 args = parser.parse_args()
+CODE_ROOT = ROOT
+patch_test = args.test_build
+ROOT = args.input_root.resolve()
+os.environ['BETTER_QUICKSLOTS_INPUT_ROOT'] = str(ROOT)
 saturated = args.variant == 'saturated'
-version = '1.0.0'
+version = '1.1.0'
 package = f'BetterQuickslots-v{version}' + ('-Saturated' if saturated else '')
-build_id = 'v100-saturated-release' if saturated else 'v100'
+build_id = 'v110-saturated-release' if saturated else 'v110-default-release'
+if patch_test:
+    package = 'BetterQuickslots-Patch11-Test' + ('-Saturated' if saturated else '-Default')
+    build_id = 'patch11-test-saturated' if saturated else 'patch11-test-default'
 stage = ROOT / f'staging-{build_id}'
 dist = args.output_root.resolve() / package
 containers = ROOT / f'verify-{build_id}-containers'
@@ -28,7 +39,7 @@ for directory in (stage, dist, containers, verified):
 # Restore the confirmed original geometry and use an alpha-trimmed private sprite.
 from build_trimmed_sprite import build as build_trimmed, ATLAS
 trimmed_assets, trimmed_bulk = build_trimmed(
-    border_gain=1.45 if saturated else 1.0,
+    border_gain=2.0 if saturated else 1.0,
     border_alpha_gain=1.20 if saturated else 1.0,
 )
 trimmed_package = r.add_import('/Game/_Dawnwalker/UI/_Unified/HUD/Quickslots/Atlas/Frames/T_Quickslot_RarityTrimmed', 0, cn='Package')
@@ -111,13 +122,18 @@ def run(*args):
     subprocess.run([str(a) for a in args], cwd=ROOT, check=True,
                    creationflags=subprocess.CREATE_NO_WINDOW)
 
-gui = ROOT / 'tools/UAssetGUI.exe'
-retoc = ROOT / 'tools/retoc/retoc.exe'
+gui = CODE_ROOT / 'tools/UAssetGUI.exe'
+retoc = CODE_ROOT / 'tools/retoc/retoc.exe'
 for source, relative in assets:
     target = stage / relative
     target.parent.mkdir(parents=True, exist_ok=True)
     run(gui, 'fromjson', source, target, 'Dawnwalker')
     assert target.exists() and target.with_suffix('.uexp').exists()
+    if relative.name in ('WBP_Inventory_QuickslotRarity.uasset', 'WBP_Inventory_Quickslots_QSH.uasset'):
+        # UAssetAPI resolves inherited Blueprint schemas beside the source
+        # JSON. Make newly compiled private dependencies available there.
+        for suffix in ('.uasset', '.uexp'):
+            shutil.copy2(target.with_suffix(suffix), (ROOT / 'extracted' / relative).with_suffix(suffix))
 
 for source, relative in trimmed_assets:
     target = stage / relative
@@ -197,39 +213,52 @@ for relative, stock_json in (
         if 'Data' in a:
             assert properties(a['Data']) == properties(b['Data']), (relative, a['ObjectName'], 'stock consumer schema')
 print('PASS: stock HUD and crafting quickslot templates decode unchanged against the patched class.')
-# The layout and hover screen remain byte-identical; only button visuals change.
-for _, relative in assets[1:3]:
-    for suffix in ('.uasset', '.uexp'):
-        assert (stage / relative.with_suffix(suffix)).read_bytes() == (ROOT / 'staging-v02' / relative.with_suffix(suffix)).read_bytes(), relative
-for _, relative in (assets[0], assets[3]):
-    actual = json.loads((verified / (relative.stem + '.json')).read_text(encoding='utf-8-sig'))
-    previous = json.loads((ROOT / 'verify-v041' / (relative.stem + '.json')).read_text(encoding='utf-8-sig'))
-    for a, b in zip(actual['Exports'], previous['Exports']):
-        for key in ('ScriptBytecode', 'ScriptBytecodeSize', 'LoadedProperties'):
-            if key in a:
-                assert properties(a[key]) == properties(b[key]), (relative, a['ObjectName'], key)
+def verify_stock_preservation(root, shared, rarity, normalize):
+    stock = json.loads((root / 'decoded/button.json').read_text(encoding='utf-8-sig'))
+    assert shared['Imports'][:len(stock['Imports'])] == stock['Imports']
+    stock_class = rarity.get_exp(stock, rarity.OLD + '_C')
+    patched_class = rarity.get_exp(shared, rarity.OLD + '_C')
+    assert patched_class['LoadedProperties'] == stock_class['LoadedProperties']
+    assert any(p['Name'] == 'Previous Displayed Item' for p in stock_class['LoadedProperties'])
+    assert any(e['ObjectName'] == 'OnQuickslotActivated' for e in stock['Exports'])
+    # Existing exports retain their indices. Compare every stock function,
+    # removing only our single appended rarity update from its designated function.
+    for before, after in zip(stock['Exports'], shared['Exports']):
+        assert before['ObjectName'] == after['ObjectName']
+        if 'ScriptBytecode' not in before:
+            continue
+        code = list(after['ScriptBytecode'])
+        if before['ObjectName'] == 'Update Displayed Item':
+            call = code.pop(-3)
+            assert call['VirtualFunctionName'] == 'QSH_UpdateRarity'
+            assert after['ScriptBytecodeSize'] == before['ScriptBytecodeSize'] + rarity.sz(call)
+        else:
+            assert after['ScriptBytecodeSize'] == before['ScriptBytecodeSize']
+        assert code == before['ScriptBytecode'], before['ObjectName']
+        assert after.get('LoadedProperties') == before.get('LoadedProperties'), before['ObjectName']
+        assert after.get('FunctionFlags') == before.get('FunctionFlags'), before['ObjectName']
     for name in ('Background', 'ItemIcon', 'ItemBox', 'StackSize'):
-        assert r.get_exp(actual, name)['Data'] == r.get_exp(previous, name)['Data']
-    visible = [r.get_exp(actual, name) for name in r.glow_names
-               if next(p['Value'] for p in r.get_exp(actual, name)['Data'] if p['Name'] == 'Visibility') != 'Collapsed']
-    assert len(visible) == 1 and visible[0]['ObjectName'] == r.glow_names[-1]
-    transform = next(p for p in visible[0]['Data'] if p['Name'] == 'RenderTransform')
-    scale = next(p['Value'][0]['Value'] for p in transform['Value'] if p['Name'] == 'Scale')
-    assert properties(scale['X']) == 1.19 and properties(scale['Y']) == 1.19
-print('PASS: one visible stock-artwork rarity outline; original bytecode, schemas, backgrounds, icons and counts preserved.')
-# Tone adjustments must leave every non-texture asset byte-identical to the
-# confirmed v0.4.4 / default v1.0.0 build, including both complete buttons.
-for _, relative in assets:
-    if relative == ATLAS:
-        continue
-    for suffix in ('.uasset', '.uexp'):
-        assert (stage / relative.with_suffix(suffix)).read_bytes() == (ROOT / 'staging-v044' / relative.with_suffix(suffix)).read_bytes(), (relative, 'confirmed asset changed')
-print('PASS: all five non-texture assets are byte-identical to the confirmed default.')
+        assert rarity.get_exp(shared, name)['Data'] == rarity.get_exp(stock, name)['Data'], name
+    for asset in (shared, rarity.b):
+        visible = [rarity.get_exp(asset, name) for name in rarity.glow_names
+                   if next(p['Value'] for p in rarity.get_exp(asset, name)['Data']
+                           if p['Name'] == 'Visibility') != 'Collapsed']
+        assert len(visible) == 1 and visible[0]['ObjectName'] == rarity.glow_names[-1]
+        transform = next(p for p in visible[0]['Data'] if p['Name'] == 'RenderTransform')
+        scale = next(p['Value'][0]['Value'] for p in transform['Value'] if p['Name'] == 'Scale')
+        assert normalize(scale['X']) == 1.19 and normalize(scale['Y']) == 1.19
+    print('PASS: 1.1 stock class schema, activation event and all original function bytecode preserved; one thin rarity outline.')
+
+
+verify_stock_preservation(ROOT, shared, r, properties)
 
 title = f'Better Quickslots — v{version}' + (' — Saturated' if saturated else '')
-introduction = ('Optional version with a more pronounced rarity border.' if saturated else 'First stable release.')
+introduction = 'Updated for Dawnwalker 1.1.' + (' Optional stronger rarity borders.' if saturated else ' Original subtle rarity borders.')
+if patch_test:
+    title = 'Better Quickslots — Dawnwalker 1.1 compatibility test' + (' — Saturated' if saturated else ' — Default')
+    introduction = 'Test build for Dawnwalker 1.1. In-game confirmation is still required.'
 variant_features = ('The same thin diamond artwork with stronger border color and opacity.\n' if saturated else '')
-variant_install = ('Install either Default or Saturated, never both. To switch, replace all\nthree files together or disable the other variant in your mod manager.\n\n' if saturated else '')
+variant_install = 'Install either Default or Saturated, never both. To switch, replace all\nthree files together or disable the other variant in your mod manager.\n\n'
 readme = f'''{title}
 
 {introduction}
@@ -255,6 +284,7 @@ Close the game and remove only the three Better Quickslots files listed above.
 UE4SS and other mods can stay installed.
 
 COMPATIBILITY
+For Dawnwalker 1.1.
 Other mods replacing WBP_Hub_NewInventory or WBP_HUD_Quickslots_Button may conflict.
 Game updates may require rebuilding. The same button is used by inventory,
 crafting and gameplay. Do not assume compatibility with every future game patch.

@@ -2,8 +2,9 @@
 import copy
 import json
 from pathlib import Path
+import os
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(os.environ.get('BETTER_QUICKSLOTS_INPUT_ROOT', Path(__file__).resolve().parent))
 SOURCE = ROOT / 'decoded/hub.json'
 OUTPUT = ROOT / 'extracted/Dawnwalker/Content/_Dawnwalker/UI/_Unified/GameHub/Inventory/hover-patched.json'
 a = json.loads(SOURCE.read_text(encoding='utf-8-sig'))

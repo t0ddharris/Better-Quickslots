@@ -2,9 +2,10 @@
 import copy
 import json
 from pathlib import Path
+import os
 import build_patch as base
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(os.environ.get('BETTER_QUICKSLOTS_INPUT_ROOT', Path(__file__).resolve().parent))
 OLD = 'WBP_HUD_Quickslots_Button'
 NEW = 'WBP_Inventory_QuickslotRarity'
 BUTTON_DIR = ROOT / 'extracted/Dawnwalker/Content/_Dawnwalker/UI/_Unified/HUD/Quickslots'

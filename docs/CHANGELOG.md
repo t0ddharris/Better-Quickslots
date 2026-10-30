@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.1.0 — Default and Saturated
+
+- Updates both versions for Dawnwalker 1.1, addressing the startup crash with the previous release.
+- Default retains its original subtle borders; Saturated retains its stronger border color and opacity.
+- Preserves inventory hover details, thin diamond artwork, rarity colors, icons, counts, and layout.
+- Both versions now share the same version number. Replace all three files together when upgrading, and install only one version at a time.
+
+## v1.0.1 Saturated
+
+- Increases retained border RGB gain from 1.45 to 2.0 for stronger color intensity. Alpha gain stays at 1.20.
+- Preserves the existing artwork, thin geometry, rarity hues, blue correction, hover details, icons, counts, and layout. No new features or installation changes.
+- Confirmed working by the user. Full static validation passed; the release uses the exact approved 2.0x test payloads without recooking.
+- Preserves the already-public Saturated v1.0.0 and unchanged Default v1.0.0 packages.
+
 ## v1.0.0 Saturated
 
 - Adds an optional, more pronounced rarity border using the same thin diamond artwork and geometry.
